@@ -193,16 +193,15 @@ function resize() {
   }
 }
 
-function paint(target, w, h, scaleWidth, limit) {
-  const t = drawn.turtle;
-  target.fillStyle = background(settings.palette);
+function paint(target, w, h, scaleWidth, limit, t = drawn.turtle, strokes = batches, palette = settings.palette) {
+  target.fillStyle = background(palette);
   target.fillRect(0, 0, w, h);
   if (t.count === 0) return;
   const f = fitTransform(t.bounds, w, h, 18 * scaleWidth);
   const s = t.segments;
   target.lineCap = 'round';
   target.lineJoin = 'round';
-  for (const b of batches) {
+  for (const b of strokes) {
     target.beginPath();
     let lx = NaN;
     let ly = NaN;
