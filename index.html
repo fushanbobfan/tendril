@@ -17,16 +17,17 @@
   <main>
     <section class="stage" aria-label="Drawing">
       <div class="canvas-wrap">
-        <canvas id="garden" role="img" aria-label="L-system drawing"></canvas>
+        <canvas id="garden" role="img" tabindex="0" aria-label="L-system drawing"></canvas>
       </div>
       <div class="stage-bar">
         <p id="stats" class="status" aria-live="polite"></p>
         <div class="buttons">
           <button id="grow" type="button">Grow</button>
           <button id="reseed" type="button">New seed</button>
+          <button id="home" type="button" disabled>Reset view</button>
         </div>
       </div>
-      <p class="hint">Keys: <kbd>G</kbd> replays the growth, <kbd>N</kbd> draws a new seed, <kbd>[</kbd> and <kbd>]</kbd> step the generation down and up, <kbd>B</kbd> breeds, <kbd>Z</kbd> steps back to the parent.</p>
+      <p class="hint">Keys: <kbd>G</kbd> replays the growth, <kbd>N</kbd> draws a new seed, <kbd>[</kbd> and <kbd>]</kbd> step the generation down and up, <kbd>B</kbd> breeds, <kbd>Z</kbd> steps back to the parent. Scroll or pinch to zoom, drag or use the arrow keys on the drawing to pan, <kbd>+</kbd> <kbd>-</kbd> zoom, <kbd>0</kbd> or a double click resets the view.</p>
 
       <section class="breed" aria-labelledby="breed-title">
         <div class="breed-bar">
