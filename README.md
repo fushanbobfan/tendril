@@ -49,9 +49,19 @@ current plant and a new litter appears. *Back to parent* (<kbd>Z</kbd>)
 walks back up the line. A few picks from *Fern* or *Herb* are enough to
 reach plants no preset contains.
 
+**Look closer.** Scroll or pinch on the drawing to zoom in about the
+pointer, up to 64 times; drag to pan, or focus the drawing and use the
+arrow keys. <kbd>+</kbd> and <kbd>-</kbd> zoom about the centre, and
+<kbd>0</kbd>, a double click or *Reset view* returns to the whole drawing.
+Zoom into a Gosper or Hilbert curve to see that it never crosses itself,
+or into the tip of a fern to see the same branching repeated at the
+smallest scale. Changing preset, picking an offspring or stepping back
+resets the view.
+
 **Take it with you.** *Copy share link* stores the grammar and every
 setting in the URL; *Save PNG* renders a 2048 px image and *Save SVG*
-writes the strokes as vector paths.
+writes the strokes as vector paths. Both exports show the whole drawing,
+whatever the current zoom.
 
 ## Grammar
 
@@ -133,7 +143,8 @@ multiply their segment counts by 3 and 7 per generation.
 ## Accessibility
 
 - Every control is a labelled native input; keyboard shortcuts are ignored
-  while typing in a field.
+  while typing in a field. Zoom and pan work from the keyboard as well as
+  the mouse and touch.
 - The canvas carries a text description of what is drawn (name,
   generation, stroke count, branch depth), and the status line is a polite
   live region.
@@ -155,6 +166,7 @@ src/params.js      settings, clamping, share links
 src/palette.js     colour ramps and contrast check
 src/render.js      stroke batching and SVG export
 src/mutate.js      grammar mutations and litters for breeding
+src/view.js        zoom and pan over the fitted drawing
 src/main.js        DOM wiring, animation, breeding, exports
 test/              node:test suites
 ```
