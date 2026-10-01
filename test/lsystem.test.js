@@ -59,3 +59,11 @@ test('seeded generator is deterministic and string seeds hash stably', () => {
   assert.equal(hashSeed(42), 42);
   assert.notEqual(hashSeed('a'), hashSeed('b'));
 });
+
+test('formatRules writes rules that parse back to the same productions', async () => {
+  const { formatRules } = await import('../src/lsystem.js');
+  const text = 'X -> F[+X][-X]FX\nF (0.25) -> FF\nF (0.75) -> F';
+  const { rules } = parseRules(text);
+  assert.equal(formatRules(rules), text);
+  assert.deepEqual(parseRules(formatRules(rules)).rules, rules);
+});
