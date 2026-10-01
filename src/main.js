@@ -4,6 +4,7 @@ import { interpret, fitTransform, STRIDE } from './turtle.js';
 import { buildBatches, toSVG } from './render.js';
 import { background } from './palette.js';
 import { fromPreset, clampSettings, encodeHash, decodeHash } from './params.js';
+import { litter } from './mutate.js';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('garden');
@@ -81,6 +82,7 @@ function bind() {
     if (!e.target.value) return;
     const animate = $('animate').checked;
     settings = fromPreset(e.target.value);
+    resetLineage();
     syncControls();
     $('animate').checked = animate;
     update({}, { regrow: true });
@@ -96,6 +98,8 @@ function bind() {
     });
   }
   $('grow').addEventListener('click', startGrowth);
+  $('breed').addEventListener('click', breed);
+  $('back').addEventListener('click', back);
   $('reseed').addEventListener('click', reseed);
   $('share').addEventListener('click', share);
   $('png').addEventListener('click', savePNG);
@@ -111,12 +115,15 @@ function bind() {
     else if (key === 'n') reseed();
     else if (key === '[') update({ iterations: settings.iterations - 1 }, { regrow: true });
     else if (key === ']') update({ iterations: settings.iterations + 1 }, { regrow: true });
+    else if (key === 'b') breed();
+    else if (key === 'z') back();
     else return;
     e.preventDefault();
   });
   window.addEventListener('hashchange', () => {
     if (location.hash === encodeHash(settings)) return;
     settings = decodeHash(location.hash);
+    resetLineage();
     syncControls();
     rebuild();
     draw();
@@ -245,6 +252,78 @@ function finishGrowth() {
   cancelAnimationFrame(animFrame);
   progress = 1;
   draw();
+}
+
+// ---- breeding -------------------------------------------------------------
+
+const LITTER = 6;
+const THUMB_SYMBOLS = 250_000;
+let lineage = []; // parents of the current grammar, oldest first
+let rounds = 0;
+
+function resetLineage() {
+  lineage = [];
+  $('litter').replaceChildren();
+  showLineage();
+}
+
+function showLineage() {
+  $('back').disabled = lineage.length === 0;
+  const root = findPreset((lineage[0] ?? settings).preset)?.name ?? 'the grammar';
+  $('lineage').textContent = lineage.length
+    ? `${lineage.length} ${lineage.length === 1 ? 'pick' : 'picks'} away from ${root}. Pick again, or step back to the parent.`
+    : 'Each offspring changes one thing in the grammar. Pick the one you like and breed again.';
+}
+
+function grow(s) {
+  const { rules } = parseRules(s.rules);
+  const { word } = derive(s.axiom, rules, s.iterations, { seed: s.seed, maxSymbols: THUMB_SYMBOLS });
+  return interpret(word, { angle: s.angle, heading: s.heading, draw: s.draw, jitter: s.jitter, seed: s.seed, widthDecay: s.widthDecay, lengthDecay: s.lengthDecay });
+}
+
+function breed() {
+  rounds++;
+  const kids = litter(settings, LITTER, `${settings.seed}:${lineage.length}:${rounds}`);
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const size = Math.round(220 * dpr);
+  const items = kids.map((kid, i) => {
+    const child = clampSettings(kid.settings);
+    const turtle = grow(child);
+    const strokes = buildBatches(turtle, { palette: child.palette, lineWidth: Math.max(0.5, child.lineWidth * 0.6) });
+    const thumb = document.createElement('canvas');
+    thumb.width = size;
+    thumb.height = size;
+    thumb.setAttribute('aria-hidden', 'true');
+    paint(thumb.getContext('2d'), size, size, dpr, Infinity, turtle, strokes, child.palette);
+    const caption = document.createElement('span');
+    caption.className = 'what';
+    caption.textContent = kid.what;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.setAttribute('aria-label', `Offspring ${i + 1}: ${kid.what}, ${turtle.count.toLocaleString('en-US')} strokes`);
+    button.append(thumb, caption);
+    button.addEventListener('click', () => adopt(child));
+    const li = document.createElement('li');
+    li.append(button);
+    return li;
+  });
+  $('litter').replaceChildren(...items);
+  showLineage();
+}
+
+function adopt(child) {
+  lineage.push(settings);
+  settings = child;
+  update({}, { regrow: true });
+  breed();
+  $('litter').querySelector('button')?.focus();
+}
+
+function back() {
+  if (lineage.length === 0) return;
+  settings = lineage.pop();
+  update({}, { regrow: true });
+  breed();
 }
 
 // ---- export ---------------------------------------------------------------
