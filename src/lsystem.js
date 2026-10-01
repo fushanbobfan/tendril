@@ -49,6 +49,18 @@ export function parseRules(text) {
   return { rules, errors };
 }
 
+// Write rules back as text; weights appear only where a letter has a choice.
+export function formatRules(rules) {
+  const lines = [];
+  for (const [pred, options] of rules) {
+    for (const o of options) {
+      const w = options.length > 1 ? ` (${+o.weight.toFixed(3)})` : '';
+      lines.push(`${pred}${w} -> ${o.successor}`);
+    }
+  }
+  return lines.join('\n');
+}
+
 export function isStochastic(rules) {
   for (const options of rules.values()) if (options.length > 1) return true;
   return false;

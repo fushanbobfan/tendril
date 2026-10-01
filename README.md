@@ -41,6 +41,14 @@ you type, and a malformed line is reported with its line number. Try
 `F -> F[+F]F[-F][F]` and then add a second line `F (0.5) -> F[-F]F` to
 make it random.
 
+**Breed a new species.** Press *Breed six offspring* (or <kbd>B</kbd>).
+Each thumbnail changes one thing in the grammar, and its caption says
+what: a branch grafted on or pruned off, a turn flipped or added, a stem
+doubled, or the turn angle nudged. Click the one you like; it becomes the
+current plant and a new litter appears. *Back to parent* (<kbd>Z</kbd>)
+walks back up the line. A few picks from *Fern* or *Herb* are enough to
+reach plants no preset contains.
+
 **Take it with you.** *Copy share link* stores the grammar and every
 setting in the URL; *Save PNG* renders a 2048 px image and *Save SVG*
 writes the strokes as vector paths.
@@ -65,6 +73,26 @@ F -> FF
 
 To stay responsive, growth stops at the last generation that keeps the
 word under 1.5 million symbols, and the status line says so.
+
+## Breeding
+
+Breeding follows the spirit of Richard Dawkins's biomorphs: you are the
+selection, and the grammar is the genome. One mutation per offspring:
+
+| Edit | What changes |
+| --- | --- |
+| graft | inserts `[+X]` or `[-X]` (a growing letter on a side branch) somewhere in one rule |
+| prune | removes one bracketed branch, nested branches included |
+| flip | turns one `+` into `-` or back |
+| bend | inserts a `+` or `-` |
+| stretch | doubles one drawing letter |
+| angle | moves the turn angle by 2 to 8 degrees |
+
+Edits always keep brackets balanced and rules at most 64 symbols long, and
+a litter never shows the same offspring twice. When a letter has several
+random choices, one choice is edited and the weights are kept. Thumbnails
+are grown with a lower symbol limit so a litter appears at once; the
+chosen plant is regrown at full size.
 
 ## Turtle commands
 
@@ -126,7 +154,8 @@ src/presets.js     preset grammars
 src/params.js      settings, clamping, share links
 src/palette.js     colour ramps and contrast check
 src/render.js      stroke batching and SVG export
-src/main.js        DOM wiring, animation, exports
+src/mutate.js      grammar mutations and litters for breeding
+src/main.js        DOM wiring, animation, breeding, exports
 test/              node:test suites
 ```
 
