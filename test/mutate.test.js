@@ -66,3 +66,11 @@ test('balanced spots stray and missing brackets', () => {
   assert.ok(!balanced('F]['));
   assert.ok(!balanced('F[+F'));
 });
+
+test('a litter holds no two identical offspring', () => {
+  for (const id of ['fern', 'herb', 'koch-island', 'dragon']) {
+    const kids = litter(fromPreset(id), 6, id);
+    assert.equal(kids.length, 6, id);
+    assert.equal(new Set(kids.map((k) => `${k.settings.rules}|${k.settings.angle}`)).size, 6, id);
+  }
+});

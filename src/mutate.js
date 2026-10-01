@@ -98,10 +98,19 @@ function angleNudge(settings, rng) {
   return { settings: { ...settings, angle }, what: `turn angle ${d >= 0 ? '+' : ''}${d}°` };
 }
 
-// A litter of `n` offspring with distinct seeds derived from `seed`.
+// A litter of `n` different offspring, seeds derived from `seed`. Small
+// grammars have few distinct edits (every F in "FF" doubles to "FFF"), so
+// repeats are skipped, giving up after a few tries per slot.
 export function litter(settings, n, seed) {
   const out = [];
-  for (let i = 0; i < n; i++) out.push(mutate(settings, `${seed}:${i}`));
+  const seen = new Set([`${settings.rules}|${settings.angle}`]);
+  for (let i = 0; out.length < n && i < n * 6; i++) {
+    const kid = mutate(settings, `${seed}:${i}`);
+    const key = `${kid.settings.rules}|${kid.settings.angle}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(kid);
+  }
   return out;
 }
 
