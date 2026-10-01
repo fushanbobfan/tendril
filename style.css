@@ -75,6 +75,20 @@ canvas {
   height: 100%;
 }
 
+/* Vertical swipes still scroll the page until the drawing is zoomed. */
+#garden {
+  touch-action: pan-y;
+}
+
+#garden.zoomed {
+  touch-action: none;
+  cursor: grab;
+}
+
+#garden.zoomed:active {
+  cursor: grabbing;
+}
+
 .stage-bar {
   display: flex;
   flex-wrap: wrap;
