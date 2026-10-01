@@ -5,6 +5,7 @@ import { buildBatches, toSVG } from './render.js';
 import { background } from './palette.js';
 import { fromPreset, clampSettings, encodeHash, decodeHash } from './params.js';
 import { litter } from './mutate.js';
+import { HOME, zoomAt, panBy, applyView, isHome } from './view.js';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('garden');
@@ -19,6 +20,7 @@ let progress = 1;
 let animStart = 0;
 let animFrame = 0;
 let rulesError = '';
+let view = { ...HOME };
 
 const GROW_MS = 2600;
 
@@ -83,6 +85,7 @@ function bind() {
     const animate = $('animate').checked;
     settings = fromPreset(e.target.value);
     resetLineage();
+    setView(HOME);
     syncControls();
     $('animate').checked = animate;
     update({}, { regrow: true });
@@ -116,6 +119,9 @@ function bind() {
     else if (key === '[') update({ iterations: settings.iterations - 1 }, { regrow: true });
     else if (key === ']') update({ iterations: settings.iterations + 1 }, { regrow: true });
     else if (key === 'b') breed();
+    else if (key === '+' || key === '=') zoomCentre(1.5);
+    else if (key === '-') zoomCentre(1 / 1.5);
+    else if (key === '0') setView(HOME, true);
     else if (key === 'z') back();
     else return;
     e.preventDefault();
@@ -124,11 +130,13 @@ function bind() {
     if (location.hash === encodeHash(settings)) return;
     settings = decodeHash(location.hash);
     resetLineage();
+    setView(HOME);
     syncControls();
     rebuild();
     draw();
   });
   new ResizeObserver(resize).observe(canvas);
+  bindView();
 }
 
 function reseed() {
@@ -200,11 +208,11 @@ function resize() {
   }
 }
 
-function paint(target, w, h, scaleWidth, limit, t = drawn.turtle, strokes = batches, palette = settings.palette) {
+function paint(target, w, h, scaleWidth, limit, t = drawn.turtle, strokes = batches, palette = settings.palette, v = HOME) {
   target.fillStyle = background(palette);
   target.fillRect(0, 0, w, h);
   if (t.count === 0) return;
-  const f = fitTransform(t.bounds, w, h, 18 * scaleWidth);
+  const f = applyView(v, fitTransform(t.bounds, w, h, 18 * scaleWidth), w, h);
   const s = t.segments;
   target.lineCap = 'round';
   target.lineJoin = 'round';
@@ -231,7 +239,7 @@ function paint(target, w, h, scaleWidth, limit, t = drawn.turtle, strokes = batc
 function draw() {
   if (!drawn) return;
   const dpr = canvas.width / Math.max(1, canvas.getBoundingClientRect().width);
-  paint(ctx, canvas.width, canvas.height, dpr, Math.ceil(drawn.turtle.count * progress));
+  paint(ctx, canvas.width, canvas.height, dpr, Math.ceil(drawn.turtle.count * progress), drawn.turtle, batches, settings.palette, view);
 }
 
 function startGrowth() {
@@ -252,6 +260,81 @@ function finishGrowth() {
   cancelAnimationFrame(animFrame);
   progress = 1;
   draw();
+}
+
+// ---- zoom and pan ---------------------------------------------------------
+
+function setView(v, redraw = false) {
+  view = v;
+  const home = isHome(view);
+  $('home').disabled = home;
+  $('home').textContent = home ? 'Reset view' : `Reset view (×${view.zoom.toFixed(view.zoom < 10 ? 1 : 0)})`;
+  canvas.classList.toggle('zoomed', !home);
+  if (redraw) draw();
+}
+
+// Pointer position in canvas pixels.
+function canvasPoint(e) {
+  const r = canvas.getBoundingClientRect();
+  return [((e.clientX - r.left) * canvas.width) / r.width, ((e.clientY - r.top) * canvas.height) / r.height];
+}
+
+function zoomCentre(factor) {
+  setView(zoomAt(view, factor, canvas.width / 2, canvas.height / 2, canvas.width, canvas.height), true);
+}
+
+function bindView() {
+  const pointers = new Map();
+  let pinch = 0;
+
+  canvas.addEventListener(
+    'wheel',
+    (e) => {
+      e.preventDefault();
+      const [px, py] = canvasPoint(e);
+      const factor = Math.exp(-e.deltaY * (e.deltaMode === 1 ? 0.05 : 0.0015));
+      setView(zoomAt(view, factor, px, py, canvas.width, canvas.height), true);
+    },
+    { passive: false },
+  );
+  canvas.addEventListener('pointerdown', (e) => {
+    canvas.setPointerCapture(e.pointerId);
+    pointers.set(e.pointerId, canvasPoint(e));
+    if (pointers.size === 2) {
+      const [a, b] = [...pointers.values()];
+      pinch = Math.hypot(a[0] - b[0], a[1] - b[1]);
+    }
+  });
+  canvas.addEventListener('pointermove', (e) => {
+    if (!pointers.has(e.pointerId)) return;
+    const prev = pointers.get(e.pointerId);
+    const now = canvasPoint(e);
+    pointers.set(e.pointerId, now);
+    if (pointers.size === 1) {
+      setView(panBy(view, now[0] - prev[0], now[1] - prev[1], canvas.width, canvas.height), true);
+    } else if (pointers.size === 2) {
+      const [a, b] = [...pointers.values()];
+      const dist = Math.hypot(a[0] - b[0], a[1] - b[1]);
+      if (pinch > 0) setView(zoomAt(view, dist / pinch, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, canvas.width, canvas.height), true);
+      pinch = dist;
+    }
+  });
+  const release = (e) => {
+    pointers.delete(e.pointerId);
+    if (pointers.size < 2) pinch = 0;
+  };
+  canvas.addEventListener('pointerup', release);
+  canvas.addEventListener('pointercancel', release);
+  canvas.addEventListener('dblclick', () => setView(HOME, true));
+  canvas.addEventListener('keydown', (e) => {
+    const step = 40 * (window.devicePixelRatio || 1);
+    const moves = { ArrowLeft: [step, 0], ArrowRight: [-step, 0], ArrowUp: [0, step], ArrowDown: [0, -step] };
+    const m = moves[e.key];
+    if (!m) return;
+    e.preventDefault();
+    setView(panBy(view, m[0], m[1], canvas.width, canvas.height), true);
+  });
+  $('home').addEventListener('click', () => setView(HOME, true));
 }
 
 // ---- breeding -------------------------------------------------------------
@@ -314,6 +397,7 @@ function breed() {
 function adopt(child) {
   lineage.push(settings);
   settings = child;
+  setView(HOME);
   update({}, { regrow: true });
   breed();
   $('litter').querySelector('button')?.focus();
@@ -322,6 +406,7 @@ function adopt(child) {
 function back() {
   if (lineage.length === 0) return;
   settings = lineage.pop();
+  setView(HOME);
   update({}, { regrow: true });
   breed();
 }
