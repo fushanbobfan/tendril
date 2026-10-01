@@ -237,3 +237,59 @@ kbd {
   color: var(--accent);
   font-size: 0.9rem;
 }
+
+.breed {
+  margin-top: 12px;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+
+.breed-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+h2 {
+  font-size: 1.15rem;
+  margin: 0;
+}
+
+.litter {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.litter button {
+  display: block;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  text-align: left;
+}
+
+.litter canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  height: auto;
+}
+
+.litter .what {
+  display: block;
+  padding: 4px 8px 6px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}

@@ -26,7 +26,19 @@
           <button id="reseed" type="button">New seed</button>
         </div>
       </div>
-      <p class="hint">Keys: <kbd>G</kbd> replays the growth, <kbd>N</kbd> draws a new seed, <kbd>[</kbd> and <kbd>]</kbd> step the generation down and up.</p>
+      <p class="hint">Keys: <kbd>G</kbd> replays the growth, <kbd>N</kbd> draws a new seed, <kbd>[</kbd> and <kbd>]</kbd> step the generation down and up, <kbd>B</kbd> breeds, <kbd>Z</kbd> steps back to the parent.</p>
+
+      <section class="breed" aria-labelledby="breed-title">
+        <div class="breed-bar">
+          <h2 id="breed-title">Breed</h2>
+          <div class="buttons">
+            <button id="breed" type="button">Breed six offspring</button>
+            <button id="back" type="button" disabled>Back to parent</button>
+          </div>
+        </div>
+        <p id="lineage" class="note">Each offspring changes one thing in the grammar. Pick the one you like and breed again.</p>
+        <ul id="litter" class="litter" aria-label="Offspring"></ul>
+      </section>
     </section>
 
     <section class="panel" aria-label="Controls">
