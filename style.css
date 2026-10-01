@@ -165,6 +165,7 @@ textarea {
 input[type='text'],
 textarea {
   font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  font-variant-ligatures: none;
 }
 
 textarea {
